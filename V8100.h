@@ -70,9 +70,15 @@ class V8100{
   // Parses the crate's status field supplied as an argument
   void parseCrateStatus(double);
 
+  
   std::string * getCrateName();
+  // Gets the number of channels that can be read out on the crate.
   double getNumberChannels();
-
+  // Gets the temperature of the power supply and fan tray in the crate.
+  double getPSTemp();
+  double getFansTemp();
+  // speed must be an array of 3 doubles.
+  double *getFanSpeeds(double * speed); 
 
   // Make the connection to the physical module. Sets private connected variable.
   int makeConnection();
@@ -83,9 +89,6 @@ class V8100{
   // Prints Board name to stdout
   // returns -1 in case of error
   std::string * readCrateName();
-
-  // Gets the number of channels that can be read out on the crate.
-  double getNumChannels();
 
 };
 

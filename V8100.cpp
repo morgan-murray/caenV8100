@@ -1,4 +1,5 @@
 
+
 #include "V8100.h"
 
 // Default constructor. Make everything apart from the board number zero and get actual values in initialize function
@@ -6,7 +7,7 @@
 V8100::V8100(int boardNumber) : 
   BD_(boardNumber),
   crate_name_("$CMD:MON,CH:8,PAR:CRNAME"),
-  crate_status_("$CMD:MON,CH:8,PAR:CRSTAT"),
+  crate_status_("$CMD:MON,CH:8,PAR:CRST"),
   num_chan_("$CMD:MON,CH:8,PAR:NUMCH"),
   ps_temp_("$CMD:MON,CH:8,PAR:PSTEMP"),
   fan_speed1_("$CMD:MON,CH:8,PAR:FAN1"),
@@ -175,7 +176,6 @@ int V8100::writeCommand(char *cmd){
   if ((ret = FT_Write(dev_,cmd,bufLen,(LPDWORD) &bufWrit)) != FT_OK){
 
     PRINT_ERR("FT_Write", (long unsigned)ret);
-    free(cmd);	
     return -1;
   }
 
@@ -343,7 +343,7 @@ double V8100::getNumberChannels(){
   }
 
 #ifdef DEBUG
-  fprintf(stderr,"Number of channels was %lf\n",num);
+  fprintf(stderr,"Number of channels was %u\n",(unsigned int)num);
 #endif
 
   // No memory leaks!                                                      
@@ -352,6 +352,249 @@ double V8100::getNumberChannels(){
   return num;
 
 }
+
+
+double V8100::getPSTemp(){
+  
+  char * cmd;
+  std::string *response = new std::string();
+  double temp;
+ 
+  cmd = this->formCommand(ps_temp_);
+
+#ifdef DEBUG_MAX
+  std::cerr << "Getting the temperature of the power supply in the crate" << std::endl;
+#endif
+
+ if (writeCommand(cmd) != 0){
+
+    std::cerr << "There was a problem writing the command to read out the power supply temperature" << std::endl;
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+  if (getResponse(response) != 0){
+    
+    fprintf(stderr,"Could not get response\n");
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+#ifdef DEBUG_MAX
+  std::cout << "Printing response:" << std::endl;
+  std::cout << (*response) << std::endl;
+#endif
+
+#ifdef DEBUG_MAX
+  std::cout << "Parsing response:" << std::endl;
+#endif
+
+  if (parseResponse(response,2,&temp) != 0){
+    std::cerr << "Could not parse response" << std::endl;
+  }
+
+#ifdef DEBUG
+  fprintf(stderr,"Temperature of power supply was %3.2lfC\n",temp);
+#endif
+
+  // No memory leaks!                                                      
+  free(cmd);
+  delete(response);
+  return temp;
+
+}
+
+double * V8100::getFanSpeeds(double * speed){  
+
+  char * cmd;
+  std::string *response = new std::string();
+ 
+  cmd = this->formCommand(fan_speed1_);
+
+#ifdef DEBUG_MAX
+  std::cerr << "Getting the speed of fan 1 in the crate" << std::endl;
+#endif
+
+ if (writeCommand(cmd) != 0){
+
+    std::cerr << "There was a problem writing the command to read out the speed of fan 1" << std::endl;
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+  if (getResponse(response) != 0){
+    
+    fprintf(stderr,"Could not get response\n");
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+#ifdef DEBUG_MAX
+  std::cout << "Printing response:" << std::endl;
+  std::cout << (*response) << std::endl;
+#endif
+
+#ifdef DEBUG_MAX
+  std::cout << "Parsing response:" << std::endl;
+#endif
+
+  if (parseResponse(response,2,speed) != 0){
+    std::cerr << "Could not parse response" << std::endl;
+  }
+
+#ifdef DEBUG
+  fprintf(stderr,"Speed of Fan 1 was %.0lf\n",speed[0]);
+#endif
+
+  free(cmd);
+ 
+  cmd = this->formCommand(fan_speed2_);
+
+#ifdef DEBUG_MAX
+  std::cerr << "Getting the speed of fan 2 in the crate" << std::endl;
+#endif
+
+ if (writeCommand(cmd) != 0){
+
+    std::cerr << "There was a problem writing the command to read out the speed of fan 2" << std::endl;
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+  if (getResponse(response) != 0){
+    
+    fprintf(stderr,"Could not get response\n");
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+#ifdef DEBUG_MAX
+  std::cout << "Printing response:" << std::endl;
+  std::cout << (*response) << std::endl;
+#endif
+
+#ifdef DEBUG_MAX
+  std::cout << "Parsing response:" << std::endl;
+#endif
+
+  if (parseResponse(response,2,(speed + 1)) != 0){
+    std::cerr << "Could not parse response" << std::endl;
+  }
+
+#ifdef DEBUG
+  fprintf(stderr,"Speed of Fan 2 was %.0lf\n",speed[1]);
+#endif
+
+  free(cmd);
+ 
+  cmd = this->formCommand(fan_speed3_);
+
+#ifdef DEBUG_MAX
+  std::cerr << "Getting the speed of fan 1 in the crate" << std::endl;
+#endif
+
+ if (writeCommand(cmd) != 0){
+
+    std::cerr << "There was a problem writing the command to read out the speed of fan 3" << std::endl;
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+  if (getResponse(response) != 0){
+    
+    fprintf(stderr,"Could not get response\n");
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+#ifdef DEBUG_MAX
+  std::cout << "Printing response:" << std::endl;
+  std::cout << (*response) << std::endl;
+#endif
+
+#ifdef DEBUG_MAX
+  std::cout << "Parsing response:" << std::endl;
+#endif
+
+  if (parseResponse(response,2,(speed+2)) != 0){
+    std::cerr << "Could not parse response" << std::endl;
+  }
+
+#ifdef DEBUG
+  fprintf(stderr,"Speed of Fan 3 was %.0lf\n",speed[2]);
+#endif
+
+  // No memory leaks!                                                      
+  free(cmd);
+  delete(response);
+#ifdef DEBUG
+  std::cerr << "Fan speeds were " << speed[0] << " " << speed[1] << " " << speed[2] << std::endl;
+#endif
+  return speed;
+
+}
+
+
+double V8100::getFansTemp(){
+  
+  char * cmd;
+  std::string *response = new std::string();
+  double temp;
+ 
+  cmd = this->formCommand(fan_temp_);
+
+#ifdef DEBUG_MAX
+  std::cerr << "Getting the temperature of the fans in the crate" << std::endl;
+#endif
+
+ if (writeCommand(cmd) != 0){
+
+    std::cerr << "There was a problem writing the command to read out the fan temperature" << std::endl;
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+  if (getResponse(response) != 0){
+    
+    fprintf(stderr,"Could not get response\n");
+    free(cmd);
+    delete(response);
+    exit(1);
+  }
+
+#ifdef DEBUG_MAX
+  std::cout << "Printing response:" << std::endl;
+  std::cout << (*response) << std::endl;
+#endif
+
+#ifdef DEBUG_MAX
+  std::cout << "Parsing response:" << std::endl;
+#endif
+
+  if (parseResponse(response,2,&temp) != 0){
+    std::cerr << "Could not parse response" << std::endl;
+  }
+
+#ifdef DEBUG
+  fprintf(stderr,"Temperature of fans was %3.2lfC\n",temp);
+#endif
+
+  // No memory leaks!                                                      
+  free(cmd);
+  delete(response);
+  return temp;
+
+}
+
 
 int V8100::getResponse(std::string * accumulator){
   
@@ -420,6 +663,7 @@ int V8100::parseResponse(std::string *response, int type, double *value){
     {	
       std::cerr << loc << std::endl;
       std::cerr << "Something has gone wrong. Command failed!" << std::endl;
+      std::cerr << *response << std::endl;
       return -9;
     }		
 
@@ -493,9 +737,9 @@ void V8100::parseCrateStatus(double statusDb){
     if ((status>>9) & 0x1)
       std::cerr << "Fans are on" << std::endl;
 
-    if ((status>>9) & 0x1)
+    if ((status>>10) & 0x1)
       std::cerr << "Fan speed is out of range" << std::endl;
 
-    if ((status>>10) & 0x1)
+    if ((status>>11) & 0x1)
       std::cerr << "Fan temperature is out of range" << std::endl;
   }
