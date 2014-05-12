@@ -21,6 +21,9 @@ V8100::V8100(int boardNumber) :
 };
 
 
+// helper function for V8100channel class.
+FT_HANDLE V8100::getHandle(){return dev_;}
+
 char * V8100::formCommand(std::string command, std::string target, std::string replacement){
 
   int position;

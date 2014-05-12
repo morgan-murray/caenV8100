@@ -64,6 +64,7 @@ class V8100{
 
   V8100(int);
 
+  FT_HANDLE getHandle();
   // Prints the current status to stdout
   // Returns status field
   double getCrateStatus();
