@@ -12,10 +12,12 @@
 #include <string>
 #include <sstream>
 
-#define RESPONSE_TIME 1 // the number of seconds that the board needs
+#define RESPONSE_TIME_V8100 1 // the number of seconds that the board needs
                         // to respond to a normal request
 #define BUFFER_SIZE 512
+#define NUMBER_OF_RETRIES 5
 #define PRINT_ERR(name, err) fprintf(stderr,"Function %s failed with error code %lu in line %d of file %s\n", name, err, __LINE__, __FILE__)
+
 
 // Header file for C++ module related to CAEN N1470 4-channel HV NIM module
 // Note that the documentation switches between iset and ilim for the same quantity
@@ -72,7 +74,10 @@ class V8100{
   void parseCrateStatus(double);
 
   
-  std::string * getCrateName();
+  // Prints crate name to stderr and returns 0 on success
+  // Returns -1 on error
+  int readCrateName();
+
   // Gets the number of channels that can be read out on the crate.
   double getNumberChannels();
   // Gets the temperature of the power supply and fan tray in the crate.
@@ -84,12 +89,6 @@ class V8100{
   // Make the connection to the physical module. Sets private connected variable.
   int makeConnection();
   int dropConnection();
-
-  // Returns 0 on success, non-zero on failure. Takes a channel number [0->3]
-
-  // Prints Board name to stdout
-  // returns -1 in case of error
-  std::string * readCrateName();
 
 };
 

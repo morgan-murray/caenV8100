@@ -251,7 +251,7 @@ double V8100::getCrateStatus(){
 }
 
 
-std::string * V8100::getCrateName(){
+int V8100::readCrateName(){
   
   char * cmd;
   std::string *response = new std::string();
@@ -292,6 +292,9 @@ std::string * V8100::getCrateName(){
 
   if (parseResponse(response,2,name) != 0){
     std::cerr << "Could not parse response" << std::endl;
+    free(cmd);
+    delete(response);
+    return -1;
   }
 
 #ifdef DEBUG
@@ -300,7 +303,8 @@ std::string * V8100::getCrateName(){
 
   // No memory leaks!                                                      
   free(cmd);
-  return name;
+  delete response;
+  return 0;
 
 }
 
@@ -614,7 +618,7 @@ int V8100::getResponse(std::string * accumulator){
   bufRead = 0;
   ret = 0;
 
-  sleep(RESPONSE_TIME);
+  sleep(RESPONSE_TIME_V8100);
   
 #ifdef DEBUG_MAX
   std::cout << "bufLenWd BufWrtWd Status" << std::endl;
@@ -622,18 +626,33 @@ int V8100::getResponse(std::string * accumulator){
 #endif
 
   do {
+    // Sometimes get an IO error, so try a few times
+    for(int ii=0; ii < NUMBER_OF_RETRIES; ii++){
 
-    if((ret = FT_GetStatus(dev_, &bufLenWd, &bufWrtWd, &status)) != FT_OK){
-      PRINT_ERR("FT_GetStatus",(long unsigned)ret);
-      return 1;
-    }
+      sleep(1);
+      ret = FT_GetStatus(dev_, &bufLenWd, &bufWrtWd, &status);
+
+      if (ret != FT_OK && ( (ii+1) == NUMBER_OF_RETRIES) ){
+	PRINT_ERR("FT_GetStatus",(long unsigned)ret);
+	return 1;
+      } else if (ret == FT_OK){
+	break;
+      } else {
+	
+	std::cerr << "FT_GetStatus had problem: " << ret << std::endl;
+	std::cerr << "Trying again in 1 second" << std::endl;
+	this->dropConnection();
+	this->makeConnection();
+      }
       
+    }
+  
     if (bufLenWd > BUFFER_SIZE){
-
+    
       buf = (char *)realloc(buf,bufLenWd);
       
       if (buf == NULL){
-
+	
 	fprintf(stderr,"OOM ERROR on buffer length %ul\n",bufLenWd);
 	return 1;
       }
@@ -695,6 +714,7 @@ int V8100::parseResponse(std::string *response, int type, std::string * value){
     {	
       std::cerr << loc << std::endl;
       std::cerr << "Something has gone wrong. Command failed!" << std::endl;
+      std::cerr << *response << std::endl;
       return -9;
     }		
 
